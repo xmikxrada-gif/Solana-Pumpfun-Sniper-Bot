@@ -1,29 +1,93 @@
-### Solana pumpfun sniper bot that listen new pools on pump.fun, automic buy - sell on pump fun. As pumpfun sniper bot on pump.fun, it's basic version about sniping on pump fun. To get full advanced version, feel free to reach out of me[Telegram: https://t.me/DevCutup, Whatsapp: https://wa.me/13137423660].
+# Solana Pumpfun Sniper Bot 
+This bot fetches to new pumpfun pools and buys as soon as possible. If RPC or node is good, it commonly buy tokens before token is availabel on Pumpfun UI, can buy tokens than the others. It's free, basic version, and I have advanced version for it. I updated codebase with Rust to boost speed and performance. Feel free to contact with me to get advanced version. [Telegram: https://t.me/DevCutup, Whatsapp: https://wa.me/13137423660]. This is just version to give vision about pumpfun and sniper bot.
+
+
 
 ## Features
-- **Automated Trading:** Automatically buy the latest coins on Pump.Fun and sell them once your target profit percentage or stop-loss percentage is reached.
-- **King of The Hill Coins:** Support for buying the top-performing coins.
-- **Custom RPC Support:** Use your preferred Solana RPC for transactions.
-- **User-Friendly Setup:** Easy setup by adding your private key and RPC URL.
-- **Latest Coins Information:** Pulls the latest 10 coins created and allows you to view more information and buy each individually.
-- **Persistent Positions:** Saves your positions and reloads them on restart.
+### Speed and Efficiency
+- **Lightning-Quick Transactions**: Leveraging Rust's exceptional performance, our bot allows you to snipe new tokens almost instantly. Say goodbye to delays and seize opportunities as they arise!
+### Safety First
+- **Robust Security**: Rust's safety guarantees minimize bugs and vulnerabilities, ensuring your trading activities are secure. Trade with confidence and peace of mind.
+### Multiple gRPC Connections
+- **Stay Updated**: Effortlessly connect to top Solana data providers like **Helius** and **Yellowstone** through multiple gRPC connections. Get real-time updates and make informed trading decisions.
+### User-Friendly Interface
+- **Intuitive Design**: My sniper bot features a clean and accessible interface, making it easy for users of all experience levels to navigate. Start trading in no time!
 
-## Latest Update
-- **New Feature:** Now pulls the latest 10 coins created on Pump.Fun.
-- **Enhanced Functionality:** Allows you to see more information about each coin and buy them individually.
-- **Position Persistence:** Automatically saves your positions and reloads them upon restart.
-- **Take Profit and Stop-Loss:** Set take profit and stop-loss percentages for automated selling.
 
-### Transactions
-mint:   https://solscan.io/tx/QKbc9RxNZPE7peDNPnxBtPMux2HfTfn9QN2AwEr7Z5P1SS1qw42FYZcXqzkm9APVkTH88ieZU4PUaCU93yPNfGa
 
-buy:    https://solscan.io/tx/5NV4oAJacFfNffAb55hkb6LEKsSTjgMd8vTzTvDKBLQvQ5XCogizBLShnpF89J8tqFrYJAHaUS5tmXtb6SBpEdNz
+## Advanced Features
+- **jito-confirm**: Engage in low-latency transactions on platforms like Raydium and Pumpfun.
+- **jito-bundle**: Bundle buy/sell actions with up to **20 wallets** in Raydium/Pumpfun, enhancing your trading strategy and flexibility.
 
-sell:   https://solscan.io/tx/5QDYSiST7KX9viNZXSeSATZYMJ5ioJrHJxqu9DVwFzREMarwwmaDXz7EYS1jC9oQq8z7V8GwTsEv94dSwdhU9s5b
 
-![result](./screenshots/1.png)
-![result](./screenshots/2.png)
-![result](./screenshots/3.png)
+
+---
+
+## Directory Structure
+
+```
+src/
+├── core/
+│   ├── token.rs        # Token definitions and handling
+│   └── tx.rs           # Transaction handling
+|   └── mod.rs          # mod file
+| 
+├── engine/
+│   ├── swap.rs         # Token swap(buy/sell) functionalities in various Dexs
+│   └── monitor         # New token monitoring(and parse tx) in Dexs using geyser rpc, and normal rpc
+│       └── helius.rs               # Helius gRpc for tx listen and parse.
+│       └── yellowstone.rs          # Yellowstone gRpc for tx listen and parse.
+|   └── mod.rs          # mod file
+|
+├── dex/
+│   ├── pumpfun.rs      # Pumpfun
+|   └── mod.rs          # mod file
+│
+├── services/
+│   ├── jito.rs        # Jito service provides ultra-fast transaction confirmation
+│   ├── nozomi.rs        # Jito service provides ultra-fast transaction confirmation
+│   ├── zeroslot.rs        # Jito service provides ultra-fast transaction confirmation
+│   └── nextblock.rs        # NextBlock service provides the ultra-fast transaction confirmation in unique way
+|   └── mod.rs          # mod file
+|
+├── common/
+│   ├── logger.rs        # Logs to be clean and convenient to monitor.
+│   └── utils.rs        # Utility functions used across the project
+|   └── mod.rs          # mod file
+│
+├── lib.rs
+└── main.rs
+```
+---
+
+
+
+### Setup
+1. Environment Variables Settings
+```plaintext
+PRIVATE_KEY= # your wallet priv_key
+RPC_API_KEY= #your helius rpc api-key (Please use premium version that has Geyser Enhanced Websocket)
+SLIPPAGE=10
+JITO_BLOCK_ENGINE_URL=https://ny.mainnet.block-engine.jito.wtf
+JITO_TIP_VALUE=0.00927
+TIME_EXCEED=60 # seconds; time limit for volume non-increasing
+TOKEN_AMOUNT=0.0000001 # token amount to purchase
+TP=3 #3 times
+SL=0.5 #50 percentage
+```
+2. Add the wallet address you want to block on a new line and save the file.
+```
+3NQmnSXfGqtgxFTZ82gS7Pwt2btn3fEPb6EiX5ax5bvr
+```
+3. Run `trial/pumpfun-sniper.exe`.
+
+
+
+### Test Result(Same Block)
+- Detect: https://solscan.io/tx/5o7ajnZ9CRf7FBYEvydu8vapJJDWtKCvRFiTUBmbeu2FmmDhAQQy3c9YFFhpTucr2SZcrf2aUsDanEVjYgwN9kBc
+- Bought: https://solscan.io/tx/3vgim3MwJsdtahXqfW2DrzTAWpVQ8EUTed2cjzHuqxSfUpfp72mgzZhiVosWaCUHdqJTDHpQaYh5xN7rkHGmzqWv
+- Dexscreener: https://dexscreener.com/solana/A1zZXCq2DmqwVD4fLDzmgQ3ceY6LQnMBVokejqnHpump
+
 
 ### Contact Information
 - Telegram: https://t.me/DevCutup
