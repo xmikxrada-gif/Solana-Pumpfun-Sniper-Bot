@@ -8,7 +8,15 @@ const connection = new Connection(SOLANA_RPC_URL, 'confirmed');
 const SOL_MINT = 'So11111111111111111111111111111111111111112';
 const USDC_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 
-export default async function handler(req: NextRequest) {
+export async function GET(req: NextRequest) {
+  return handleBotExecution(req);
+}
+
+export async function POST(req: NextRequest) {
+  return handleBotExecution(req);
+}
+
+async function handleBotExecution(req: NextRequest) {
   const authHeader = req.headers.get('authorization');
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized Access' }, { status: 401 });
@@ -105,4 +113,4 @@ async function checkMarketSpread(): Promise<{ status: boolean; profit: number }>
   } catch (e: any) {
     return { status: false, profit: 0 };
   }
-}
+    }
