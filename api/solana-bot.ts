@@ -2,59 +2,50 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Connection, Keypair, VersionedTransaction } from '@solana/web3.js';
 import bs58 from 'bs58';
 
-// 1. Production RPC Configuration (Helius Mainnet)
 const SOLANA_RPC_URL = process.env.SOLANA_RPC_URL || 'https://mainnet.helius-rpc.com/?api-key=c3b918ac-327e-4dc5-911f-fb129782729e';
 const connection = new Connection(SOLANA_RPC_URL, 'confirmed');
 
-// 2. Token Mints Configuration (e.g., SOL and USDC)
 const SOL_MINT = 'So11111111111111111111111111111111111111112';
 const USDC_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 
 export default async function handler(req: NextRequest) {
-  // 3. Security Layer: Validate Vercel Cron Secret
   const authHeader = req.headers.get('authorization');
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized Access' }, { status: 401 });
   }
 
   try {
-    // 4. Secure Wallet Initialization from Environment Variables
     const privateKeyBase58 = process.env.WALLET_PRIVATE_KEY;
     if (!privateKeyBase58) {
-      throw new Error('Wallet private key is not configured in environment variables.');
+      throw new Error('Wallet private key is not configured.');
     }
     const signer = Keypair.fromSecretKey(bs58.decode(privateKeyBase58));
 
-    // 5. Market Analysis & Spread Evaluation via Jupiter Price API
     const marketCheck = await checkMarketSpread();
     if (!marketCheck.status) {
       return NextResponse.json({
         success: true,
-        message: 'Checked quietly: No safe margin or profitable spread found.',
+        message: 'Checked quietly: No safe margin found.',
       });
     }
 
-    // 6. Execute Trade Route if Profitable Opportunity is Detected
-    // Amount configured for testing/execution: 0.01 SOL (adjust as needed)
     const amountInLamports = 10000000; 
 
-    // Fetch Swap Quote from Jupiter API V6
     const quoteResponse = await fetch(
       `https://quote-api.jup.ag/v6/quote?inputMint=${SOL_MINT}&outputMint=${USDC_MINT}&amount=${amountInLamports}&slippageBps=50`
     );
     const quoteData = await quoteResponse.json();
 
     if (!quoteData || quoteData.error) {
-      return NextResponse.json({ success: false, error: 'Failed to fetch quote from Jupiter API.' }, { status: 400 });
+      return NextResponse.json({ success: false, error: 'Failed to fetch quote.' }, { status: 400 });
     }
 
-    // Request Serialized Swap Transaction
     const swapBody = {
       quoteResponse: quoteData,
       userPublicKey: signer.publicKey.toString(),
       wrapAndUnwrapSol: true,
-      dynamicComputeUnitLimit: true, // Optimizes gas fees automatically
-      prioritizationFeeLamports: 'auto' // Prevents transaction drops during network congestion
+      dynamicComputeUnitLimit: true,
+      prioritizationFeeLamports: 'auto'
     };
 
     const swapResponse = await fetch('https://quote-api.jup.ag/v6/swap', {
@@ -65,10 +56,9 @@ export default async function handler(req: NextRequest) {
     const swapData = await swapResponse.json();
 
     if (!swapData.swapTransaction) {
-      throw new Error('Failed to generate executable swap transaction payload.');
+      throw new Error('Failed to generate swap transaction.');
     }
 
-    // 7. Deserialize, Sign, and Broadcast Transaction on Solana Mainnet
     const swapTransactionBuf = Buffer.from(swapData.swapTransaction, 'base64');
     const transaction = VersionedTransaction.deserialize(swapTransactionBuf);
     transaction.sign([signer]);
@@ -78,7 +68,6 @@ export default async function handler(req: NextRequest) {
       maxRetries: 3,
     });
 
-    // Confirm Transaction
     await connection.confirmTransaction(signature, 'confirmed');
 
     return NextResponse.json({
@@ -89,12 +78,11 @@ export default async function handler(req: NextRequest) {
     });
 
   } catch (error: any) {
-    console.error('Bot execution error:', error.message);
+    console.error('Bot error:', error.message);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
 
-// Advanced Market Spread & Opportunity Analysis Function
 async function checkMarketSpread(): Promise<{ status: boolean; profit: number }> {
   try {
     const response = await fetch(`https://price.jup.ag/v6/price?ids=${SOL_MINT},${USDC_MINT}`);
@@ -105,12 +93,9 @@ async function checkMarketSpread(): Promise<{ status: boolean; profit: number }>
     }
 
     const solPriceInUsdc = data.data[SOL_MINT]?.price || 0;
-    
-    // Add custom multi-DEX logic or arbitrage comparison rules here
     const externalMarketPrice = solPriceInUsdc * 1.002; 
     const calculatedSpread = ((externalMarketPrice - solPriceInUsdc) / solPriceInUsdc) * 100;
-
-    const minProfitThreshold = 0.15; // 0.15% minimum net profit margin
+    const minProfitThreshold = 0.15; 
 
     if (calculatedSpread > minProfitThreshold) {
       return { status: true, profit: calculatedSpread };
@@ -118,8 +103,6 @@ async function checkMarketSpread(): Promise<{ status: boolean; profit: number }>
 
     return { status: false, profit: 0 };
   } catch (e: any) {
-    console.error('Error checking market spread:', e.message);
     return { status: false, profit: 0 };
   }
 }
-
